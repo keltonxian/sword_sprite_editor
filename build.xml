@@ -1,0 +1,146 @@
+<project name="editor" default="build">
+
+	<property name="src.dir" value="src"/>
+	<property name="build.dir" value="tempclasses"/>
+	<property name="lib.dir" value="lib"/>
+	<property name="jar.dir" value="jar"/>
+	<property name="zip.dir" value="zip"/>
+
+	<path id="classpath">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<dirset dir="${build.dir}">
+			<include name="**" />
+		</dirset>
+	</path>
+
+	<target name="compile">
+		<!--        <mkdir dir="${build.dir}" />
+        <javac srcdir="${src.dir}" destdir="${build.dir}" debug="true">
+            <classpath refid="classpath"/>
+        </javac>
+        <copy todir="${build.dir}">
+            <fileset dir="${src.dir}">
+                <include name="**/**" />
+                <exclude name="**/*java" />
+                <exclude name="**/*class" />
+            </fileset>
+        </copy>-->
+	</target>
+
+	<target name="editor" depends="compile">
+		<java classname="cz.ismar.projects.IEdit.SpriteEditor" fork="true">
+			<classpath refid="classpath"/>
+		</java>
+	</target>
+
+	<target name="clean">
+		<!-- <mkdir dir="${build.dir}" />
+        <delete>
+            <fileset dir="${build.dir}">
+                <include name="**/*.class" />
+            </fileset>
+            <fileset dir="${zip.dir}">
+                <include name="**/*.class" />
+            </fileset>
+        </delete>-->
+	</target>
+
+	<target name="rebuild" depends="clean, compile">
+	</target>
+	
+	<!-- 导入progurad task --> 
+	<taskdef resource="proguard/ant/task.properties"
+				classpath="E:\WorkEnvironment\proguard4.0.1\lib\proguard.jar" />
+
+	<target name="build" depends="rebuild">
+		
+		<delete quiet="true" includeemptydirs="true" >
+			<fileset dir="${jar.dir}">
+				<include name="**/*" />
+			</fileset>
+			
+			<fileset dir="zip">
+				<include name="**/*" />
+			</fileset>
+		</delete>
+		
+		<copy todir="jar">
+			<fileset dir="${build.dir}">
+				<include name="**/**" />
+			</fileset>
+		</copy>
+		
+		<mkdir dir="zip"/>
+		
+		<jar destfile="zip/SpriteEditor_obf.jar" basedir="jar" duplicate="preserve">
+			<fileset dir="jar">
+				<include name="**/*" />
+			</fileset>
+			
+			<manifest>
+				<attribute name="Class-Path" value="lib/sixlegs.jar"/>
+				<attribute name="Main-Class" value="cz.ismar.projects.IEdit.SpriteEditor"/>
+			</manifest>
+		</jar>
+		
+		<antcall target="obfuscate"/>
+		<delete file="zip/SpriteEditor_obf.jar"/>
+		<!--antcall target="obfuscate"/-->
+
+		<echo file="zip/iEdit2.bat">java -jar SpriteEditor.jar</echo>
+		
+		<copy todir="zip" includeemptydirs="false" >
+			<fileset dir=".">
+				<include name="${lib.dir}/**" />
+			</fileset>
+			
+			
+			<fileset dir=".">
+										<include name="*.txt" />
+									</fileset>
+			
+			<fileset dir=".">
+				<include name="j2me/**" />
+			</fileset>
+			<fileset dir=".">
+				<include name="output/**" />
+			</fileset>
+			<fileset dir=".">
+				<include name="res/**" />
+			</fileset>
+			<fileset dir=".">
+				<include name="iEditorXML2Bin.jar" />
+			</fileset>
+			
+		</copy>
+		
+		<!--
+		<mkdir dir="release"/>
+		<zip destfile="release/SLGEditor-${DSTAMP}-${TSTAMP}.zip">
+			<fileset dir="zip">
+				<include name="**/*" />
+			</fileset>
+		</zip>
+		-->
+
+		<delete dir="jar"/>
+		
+		<tstamp/>
+	</target>
+	
+	<target name="obfuscate">
+		<proguard>
+			-injars      zip/SpriteEditor_obf.jar
+			-outjar      zip/SpriteEditor.jar
+			-libraryjars E:/WorkEnvironment/lib/rt.jar
+ 
+			-keep public class cz.ismar.projects.IEdit.SpriteEditor{
+			    public static void main(java.lang.String[]);
+			}
+		</proguard>
+		<!--delete file="${build.dir}/${jar.name}_obf.jar"/-->
+	</target>
+
+</project>
